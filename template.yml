@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: HTTP API Starting point
+
+Parameters:
+  ClientDomains:
+    Type: CommaDelimitedList
+    Description: Array of domains for CORS
+
+Globals:
+  Function:
+    Timeout: 5
+    # CodeUri: src/
+    Runtime: nodejs12.x
+
+Resources:
+  BaseAPI:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowMethods:
+          - GET
+        AllowOrigins: !Ref ClientDomains
+  
+  BaseFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/base.lambdaHandler
+      Description: Base lambda function
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref BaseTable
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref BaseTable
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref BaseAPI
+
+  BaseTable:
+    Type: AWS::Serverless::SimpleTable
+
+Outputs:
+  WebEndpoint:
+    Description: "HTTP API endpoint URL"
+    Value: !Sub "https://${BaseAPI}.execute-api.${AWS::Region}.amazonaws.com"
