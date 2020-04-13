@@ -1,1 +1,1 @@
-### base HTTP API template
+### Base HTTP API SAM starter template
